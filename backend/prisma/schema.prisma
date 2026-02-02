@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  admin
+  manager
+  user
+}
+
+enum UserStatus {
+  active
+  inactive
+  pending
+}
+
+enum OrderStatus {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+enum OrderPriority {
+  low
+  medium
+  high
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  passwordHash  String     @map("password_hash")
+  name          String
+  avatarUrl     String?    @map("avatar_url")
+  bio           String?
+  company       String?
+  location      String?
+  role          UserRole   @default(user)
+  status        UserStatus @default(active)
+  emailVerified Boolean    @default(false) @map("email_verified")
+  lastLoginAt   DateTime?  @map("last_login_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  refreshTokens           RefreshToken[]
+  ordersCreated           Order[]                  @relation("OrderCreatedBy")
+  ordersAssigned          Order[]                  @relation("OrderAssignedTo")
+  documents               Document[]
+  aiConversations         AiConversation[]
+  activityLogs            ActivityLog[]
+  notificationPreferences NotificationPreference?
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Order {
+  id          String        @id @default(uuid())
+  orderNumber String        @unique @map("order_number")
+  title       String
+  description String?
+  customer    String
+  amount      Decimal       @default(0) @db.Decimal(12, 2)
+  status      OrderStatus   @default(pending)
+  priority    OrderPriority @default(medium)
+  assignedToId String?      @map("assigned_to")
+  createdById  String       @map("created_by")
+  dueDate     DateTime?     @map("due_date")
+  completedAt DateTime?     @map("completed_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  assignedTo User? @relation("OrderAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy  User  @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  filename   String
+  fileType   String?  @map("file_type")
+  fileSize   Int?     @map("file_size")
+  fileUrl    String?  @map("file_url")
+  content    String?
+  uploadedById String @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model AiConversation {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  role           String   // 'user' or 'assistant'
+  content        String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  userName   String?  @map("user_name")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("activity_log")
+}
+
+model NotificationPreference {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  emailOrders   Boolean  @default(true) @map("email_orders")
+  emailReports  Boolean  @default(false) @map("email_reports")
+  emailSecurity Boolean  @default(true) @map("email_security")
+  pushMessages  Boolean  @default(true) @map("push_messages")
+  pushMentions  Boolean  @default(true) @map("push_mentions")
+  pushUpdates   Boolean  @default(false) @map("push_updates")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
