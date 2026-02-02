@@ -1,6 +1,5 @@
-import { Moon, Sun, Monitor, Search, Bell } from 'lucide-react'
+import { Moon, Sun, Monitor, Bell } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -14,33 +13,15 @@ export function AppHeader() {
   const { theme, setTheme } = useThemeStore()
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
       <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
-
-      {/* Search */}
-      <div className="flex-1">
-        <Button
-          variant="outline"
-          className="w-full max-w-sm justify-start text-muted-foreground"
-          onClick={() => {
-            // TODO: Open command palette
-          }}
-        >
-          <Search className="mr-2 size-4" />
-          <span>Search...</span>
-          <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </Button>
-      </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="size-4" />
-          <span className="absolute right-1 top-1 flex h-2 w-2">
+          <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
           </span>
