@@ -30,14 +30,14 @@ export class AuthService {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     // Create user
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
-        passwordHash,
+        password: hashedPassword,
       },
       select: {
         id: true,
@@ -63,7 +63,7 @@ export class AuthService {
     }
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
